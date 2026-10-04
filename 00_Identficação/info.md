@@ -1,19 +1,19 @@
 #Identificação do Projeto RideSync
 
 #1. Titulo do Projeto
-RideSync: APP para organizar e acompanhar passeios de mota e de carro
+- RideSync: APP para organizar e acompanhar passeios de mota e de carro
 
 #2 Ano Letivo
-2026/2027
+- 2026/2027
 
 #3 Elementos do grupo
-Afonso Raimundo
-Tomas Estrela
-Antonio Silva
-Miguel Carvalho
+- Afonso Raimundo
+- Tomas Estrela
+- Antonio Silva
+- Miguel Carvalho
 
 #4 Curso e Instituição
-\n IADE, Licenciatura de Engenharia Informatica
+- IADE, Licenciatura de Engenharia Informatica
 
 #5 Unidades Curriculares 
 - Projeto de Desenvolvimento Movel
@@ -24,5 +24,5 @@ Miguel Carvalho
 - Matemática Discreta
 
 #6 Palvaras-chave
-App Móvel, passeios em grupo, carros, motas, mapas, gps, QR CODE, Flutter, API REST, MYSQL
+- App Móvel, passeios em grupo, carros, motas, mapas, gps, QR CODE, Flutter, API REST, MYSQL
 
