@@ -5,7 +5,7 @@ Ano letivo	2026/2027
 Semestre	3.º semestre
 Unidades curriculares	Projeto de Desenvolvimento Móvel; Programação de Dispositivos Móveis; Redes e Comunicações de Dados; Bases de Dados; Interfaces e Usabilidade; Matemática Discreta
 Docentes	Fabio Guilherme (Projeto de Desenvolvimento Móvel); João Pedro Duarte Barros Monge (Programação de Dispositivos Móveis); Nathan Campos e Pedro Rosa (Redes e Comunicações de Dados); Miguel Boavida (Bases de Dados); Paula Neves (Interfaces e Usabilidade); André da Cunha Torcato e Ricardo Manuel Freitas de Sousa (Matemática Discreta)
-# Resumo
+## Resumo
 A RideSync é uma aplicação móvel para organizar passeios de carro e de mota em grupo. A ideia vem de uma situação que conhecemos bem: quando se combina um passeio com amigos, a conversa fica num grupo de WhatsApp, o percurso fica numa app de navegação e, se alguém se atrasa ou perde o grupo, acaba-se por telefonar. E quando o plano muda, a alteração nem sempre chega a toda a gente.
 
 Na RideSync, toda a informação fica ligada ao passeio. O organizador cria o passeio com nome, descrição, data, hora, tipo de veículos permitidos e limite de participantes, e marca no mapa a partida, o destino e os checkpoints pela ordem de passagem. Pode guardar o passeio como rascunho, mas só o consegue publicar com os dados completos. Depois de o passeio ser publicado, a app gera um convite com um QR Code e um código.
@@ -31,11 +31,11 @@ criar e publicar um passeio com percurso e checkpoints ordenados;
 aderir por QR Code ou código e escolher um veículo compatível;
 ver o mapa, os checkpoints e a lista de participantes;
 fazer uma chamada de voz para outro participante do mesmo passeio.
-d. Processo
+## Processo
 Metodologia utilizada
 Trabalhamos de forma ágil. As tarefas ficam no GitHub Projects e cada uma tem responsável, prazo, requisito associado, critério de aceitação e estado. Uma vez por semana revemos o trabalho, mostramos o que está feito e atualizamos o plano. Uma tarefa só fica concluída depois de revista, testada e documentada. O semestre está dividido em três marcos, que são as entregas de 02/10, 06/11 e 11/12/2026, e o gráfico de Gantt (img_10) mostra como distribuímos o trabalho pelas 14 semanas.
 
-Ferramentas utilizadas
+## Ferramentas utilizadas
 GitHub, para o código e a documentação: https://github.com/afonsoextreme/Projeto_mobile_26-27
 GitHub Projects, para as tarefas e o acompanhamento semanal
 Figma, para os mockups e a biblioteca de componentes: https://www.figma.com/design/5NsN1hUYVe7BaUxgMWbdbt/RideSync?m=auto&t=rjID15wPBpMvwBXz-1
@@ -52,7 +52,7 @@ Afonso Raimundo	20251105	Coordenação, integração entre a app e o servidor, m
 Miguel Carvalho	20220881	Servidor Node.js, API REST e chamada de voz
 António Silva	20250370	App em Flutter, Figma e testes de usabilidade
 Tomás Estrela	20210282	Base de dados, testes e Matemática Discreta
-e. Resultados
+## Resultados
 Descrição da solução desenvolvida
 Nesta entrega a solução está definida ao nível da proposta, do modelo e dos mockups. O código começa na fase seguinte.
 
@@ -82,7 +82,7 @@ os requisitos funcionais e não funcionais;
 o Project Charter, a WBS e o gráfico de Gantt;
 o modelo de domínio preliminar e a arquitetura provisória;
 o logótipo, a biblioteca de componentes e os mockups de quatro ecrãs no Figma.
-f. Reflexão
+## Reflexão
 Lições aprendidas
 Partir de um problema que conhecemos bem ajudou. Os guiões descrevem coisas que fazemos quando combinamos um passeio, por isso foi fácil perceber o que a app tem mesmo de fazer.
 Pôr o passeio no centro simplificou os requisitos e o modelo de domínio, porque quase tudo se liga a ele: participantes, veículos, percurso e checkpoints.
