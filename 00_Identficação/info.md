@@ -7,13 +7,13 @@ RideSync: APP para organizar e acompanhar passeios de mota e de carro
 2026/2027
 
 #3 Elementos do grupo
-Afonso Raimundo
-Tomas Estrela
+\n Afonso Raimundo
+\n Tomas Estrela
 Antonio Silva
 Miguel Carvalho
 
 #4 Curso e Instituição
-IADE, Licenciatura de Engenharia Informatica
+\n IADE, Licenciatura de Engenharia Informatica
 
 #5 Unidades Curriculares 
 - Projeto de Desenvolvimento Movel
