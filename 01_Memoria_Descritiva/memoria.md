@@ -1,11 +1,11 @@
-a. Identificação
+# Identificação
 Campo	Informação
 Nome do projeto	RideSync
 Ano letivo	2026/2027
 Semestre	3.º semestre
 Unidades curriculares	Projeto de Desenvolvimento Móvel; Programação de Dispositivos Móveis; Redes e Comunicações de Dados; Bases de Dados; Interfaces e Usabilidade; Matemática Discreta
 Docentes	Fabio Guilherme (Projeto de Desenvolvimento Móvel); João Pedro Duarte Barros Monge (Programação de Dispositivos Móveis); Nathan Campos e Pedro Rosa (Redes e Comunicações de Dados); Miguel Boavida (Bases de Dados); Paula Neves (Interfaces e Usabilidade); André da Cunha Torcato e Ricardo Manuel Freitas de Sousa (Matemática Discreta)
-b. Resumo
+# Resumo
 A RideSync é uma aplicação móvel para organizar passeios de carro e de mota em grupo. A ideia vem de uma situação que conhecemos bem: quando se combina um passeio com amigos, a conversa fica num grupo de WhatsApp, o percurso fica numa app de navegação e, se alguém se atrasa ou perde o grupo, acaba-se por telefonar. E quando o plano muda, a alteração nem sempre chega a toda a gente.
 
 Na RideSync, toda a informação fica ligada ao passeio. O organizador cria o passeio com nome, descrição, data, hora, tipo de veículos permitidos e limite de participantes, e marca no mapa a partida, o destino e os checkpoints pela ordem de passagem. Pode guardar o passeio como rascunho, mas só o consegue publicar com os dados completos. Depois de o passeio ser publicado, a app gera um convite com um QR Code e um código.
@@ -16,7 +16,7 @@ O sistema tem três partes: uma app em Flutter (Dart), uma API REST em Node.js c
 
 O projeto é desenvolvido no 3.º semestre da Licenciatura em Engenharia Informática e junta seis unidades curriculares. Nesta primeira entrega fizemos a proposta inicial: pesquisa de mercado, público-alvo, três guiões de teste, requisitos funcionais e não funcionais, Project Charter, WBS, gráfico de Gantt e modelo de domínio preliminar. Fizemos também os primeiros mockups no Figma, com quatro ecrãs e uma biblioteca de componentes. A 2.ª entrega vai trazer um protótipo com servidor e base de dados a funcionar, e no fim do semestre queremos ter a app completa a correr num telemóvel. Em todo o desenvolvimento vamos usar apenas dados fictícios.
 
-c. Contexto
+## Contexto
 Problema abordado
 Organizar um passeio em grupo obriga a andar entre várias aplicações. O plano combina-se no WhatsApp, o percurso fica numa app de navegação e, quando alguém perde o grupo ou se atrasa, resolve-se com uma chamada. Quando o plano muda, as alterações nem sempre chegam a todos e perde-se informação pelo caminho. Ao mesmo tempo, cada participante precisa de saber onde deve estar, com que veículo se inscreveu e quais são as paragens. Isto acontece a grupos de amigos, clubes e comunidades de carros e motas, que são o público-alvo da app.
 
