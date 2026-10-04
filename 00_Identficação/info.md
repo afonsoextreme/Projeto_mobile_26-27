@@ -7,8 +7,8 @@ RideSync: APP para organizar e acompanhar passeios de mota e de carro
 2026/2027
 
 #3 Elementos do grupo
-\n Afonso Raimundo
-\n Tomas Estrela
+Afonso Raimundo
+Tomas Estrela
 Antonio Silva
 Miguel Carvalho
 
