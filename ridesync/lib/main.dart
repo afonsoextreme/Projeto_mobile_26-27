@@ -1,121 +1,613 @@
 import 'package:flutter/material.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(const RideSyncApp());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class RideSyncApp extends StatelessWidget{
+  const RideSyncApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
+
     return MaterialApp(
-      title: 'Flutter Demo',
+      debugShowCheckedModeBanner: false,
+      title: 'RideSync',
       theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
-        colorScheme: .fromSeed(seedColor: Colors.deepPurple),
+        useMaterial3: true,
+        brightness: Brightness.dark,
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.orange,
+        brightness: Brightness.dark,
+        ),
+        scaffoldBackgroundColor: const Color(0xFF101114),
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: const MainScreen(),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
+class MainScreen extends StatefulWidget{
+  const MainScreen({super.key});
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  State<MainScreen> createState() => _MainScreenState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+class _MainScreenState extends State<MainScreen>{
+  int paginaAtual = 0;
+  
+  @override
+  Widget build(BuildContext context) {
+    const paginas = [
+      PasseiosScreen(),
+      GaragemScreen(),
+      PerfilScreen(),
+    ];
 
-  void _incrementCounter() {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text(
+          'RideSync', style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        centerTitle:  false,
+      ),
+      body: IndexedStack(
+        index: paginaAtual,
+        children: paginas,
+      ),
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: paginaAtual,
+        onDestinationSelected: (index){
+          setState(() {
+            paginaAtual = index;
+          });
+        },
+        destinations: const[
+          NavigationDestination(
+            icon: Icon(Icons.route_outlined),
+            selectedIcon: Icon(Icons.route),
+            label: 'Passeios'
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.garage_outlined),
+            selectedIcon: Icon(Icons.garage),
+            label: 'Garagem'
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.person_outline),
+            selectedIcon: Icon(Icons.person),
+            label: 'Perfil'
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class PasseiosScreen extends StatefulWidget{
+  const PasseiosScreen({super.key});
+  
+  @override
+  State<PasseiosScreen> createState() => _PasseioScreenState();
+}
+
+class _PasseioScreenState extends State<PasseiosScreen>{
+  final List <Passeio> passeios = [];
+
+  String formatarData(DateTime data){
+    String doisDigitos(int numero) => numero.toString().padLeft(2, '0');
+
+    return '${doisDigitos(data.day)}/${doisDigitos(data.month)}/${data.year}'
+        '${doisDigitos(data.hour)}:${doisDigitos(data.minute)}';
+  }
+
+  Future<void> criarPasseio() async{
+    final novoPasseio = await Navigator.of(context).push<Passeio>(
+      MaterialPageRoute(
+        builder: (context) => const CriarPasseioScreen(),
+      ),
+    );  
+    
+    if (!mounted || novoPasseio == null) return;
+
     setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
+      passeios.add(novoPasseio);
+
+      passeios.sort((a, b) => a.dataHora.compareTo(b.dataHora));
     });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Passeio criado com sucesso!'),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
-    return Scaffold(
-      appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
-      ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
+    return ListView(
+      padding: const EdgeInsets.all(20),
+      children: [
+        const Text(
+          'A proxima aventura começa aqui.',
+          style: TextStyle(
+            fontSize: 30,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 12),
+        const Text(
+          'Organiza passeios e junta te ao teu grupo',
+          style: TextStyle(color: Colors.white60),
+        ),
+        const SizedBox(height: 24),
+        FilledButton.icon(
+          onPressed: criarPasseio, 
+          icon: const Icon(Icons.add),
+          label: const Text('Criar Passeio'),
+        ),
+        const SizedBox(height: 30),
+        const Text(
+          'Proximos Passeios',
+          style: TextStyle(
+            fontSize: 21,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 16),
+        if(passeios.isEmpty)
+        const Card(
+          child: Padding(
+            padding: EdgeInsets.all(24),
+            child: Column(
+              children: [
+                Icon(
+                  Icons.route,
+                  size: 48,
+                  color: Colors.orange,
+                ),
+                SizedBox(height: 12),
+                Text(
+                  'Ainda não tens Passeios.',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                SizedBox(height: 8),
+                Text(
+                  'Cria o primeiro para começar!',
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
+        ),
+        ...passeios.map(
+          (passeio) => Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: PasseioCard(
+              titulo: passeio.nome, 
+              percurso: '${passeio.partida} -> ${passeio.destino}', 
+              data: formatarData(passeio.dataHora), 
+              participantes: 1, 
+              icon: Icons.route
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+
+  
+
+
+class Passeio {
+  final String nome;
+  final String descricao;
+  final String partida;
+  final String destino;
+  final DateTime dataHora;
+
+  const Passeio({
+    required this.nome,
+    required this.descricao,
+    required this.partida,
+    required this.destino,
+    required this.dataHora,
+  }); 
+}
+
+class PasseioCard extends StatelessWidget{
+  final String titulo;
+  final String percurso;
+  final String data;
+  final int participantes;
+  final IconData icon;
+
+  const PasseioCard({
+    super.key,
+    required this.titulo,
+    required this.percurso,
+    required this.data,
+    required this.participantes,
+    required this.icon,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    // TODO: implement build
+    return Card(
+      margin: EdgeInsets.zero,
+      child: Padding(
+        padding: const EdgeInsets.all(20),
         child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          //
-          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-          // action in the IDE, or press "p" in the console), to see the
-          // wireframe for each widget.
-          mainAxisAlignment: .center,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('You have pushed the button this many times:'),
+            Icon(icon, color: Colors.orange, size: 36),
+            const SizedBox(height: 16),
             Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
+              titulo,
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(percurso),
+            const SizedBox(height: 8),
+            Text(
+              data,
+              style: const TextStyle(color: Colors.white60),
+            ),
+            const Divider(height: 28),
+            Row(children: [
+              const Icon(Icons.group_outlined, size: 20),
+              const SizedBox(width: 8),
+              Text('$participantes participantes'),
+              ],
             ),
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
+    );
+  }
+}
+
+class GaragemScreen extends StatelessWidget{
+  const GaragemScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    // TODO: implement build
+    return const Padding(
+      padding: EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'A minha Garagem', 
+            style: TextStyle(
+              fontSize: 28,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          SizedBox(height: 12),
+          Text(
+            'Os teus Carros e motas vão aparecer aqui.',
+            style: TextStyle(color: Colors.white60),
+          ),
+          SizedBox(height: 24),
+          Card(
+            child: ListTile(
+              leading: Icon(
+                Icons.garage_outlined,
+                color: Colors.orange
+              ),
+              title: Text('Ainda não tens veiculos'),
+              subtitle: Text(
+                'Em breve poderás adicionar o teu primeiro veiculo',
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class PerfilScreen extends StatelessWidget{
+  const PerfilScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    // TODO: implement build
+    return ListView(
+      padding: const EdgeInsets.all(20),
+      children: const[
+        Center(
+          child: CircleAvatar(
+            radius: 45,
+            backgroundColor: Colors.orange,
+            child: Icon(
+              Icons.person,
+              size: 50,
+              color: Colors.black,
+            ),
+          ),
+        ),
+        SizedBox(height: 16),
+        Text(
+          'O meu perfil',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 26,
+            fontWeight: FontWeight.bold
+          ),
+        ),
+        SizedBox(height: 8),
+        Text(
+          'Ainda não iniciaste sessão.',
+          textAlign: TextAlign.center,
+          style: TextStyle(color: Colors.white60),
+        ),
+        SizedBox(height: 30),
+        Card(
+          child: ListTile(
+            leading: Icon(Icons.route, color: Colors.orange),
+            title: Text('Passeios Realizados'),
+            trailing: Text('0'),
+          ),
+        ),
+        Card(
+          child: ListTile(
+            leading: Icon(Icons.speed, color: Colors.orange),
+            title: Text('Quilómetros percorridos'),
+            trailing: Text('0 km'),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class CriarPasseioScreen extends StatefulWidget{
+  const CriarPasseioScreen({super.key});
+
+  @override
+  State<CriarPasseioScreen> createState() => _CriarPasseioScreenState();
+}
+
+class _CriarPasseioScreenState extends State<CriarPasseioScreen> {
+  final _formKey = GlobalKey<FormState>();
+
+  final _nomeController = TextEditingController();
+  final _descricaoController = TextEditingController();
+  final _partidaController = TextEditingController();
+  final _destinoController = TextEditingController();
+
+  DateTime? _data;
+  TimeOfDay? _hora;
+  String? _erroDataHora;
+
+  @override
+  void dispose(){
+    _nomeController.dispose();
+    _descricaoController.dispose();
+    _partidaController.dispose();
+    _destinoController.dispose();
+    super.dispose();
+  }
+  String? validarObrigatorio(String? valor){
+    if(valor == null || valor.trim().isEmpty){
+      return 'Preenche este Campo.';
+    }
+    return null;
+  }
+
+  Future<void> selecionarData() async{
+    final agora = DateTime.now();
+    final hoje = DateTime(agora.year, agora.month, agora.day);
+
+    final dataSelecionada = await showDatePicker(context: context,
+     initialDate: _data == null || _data!.isBefore(hoje)
+     ? hoje
+     :_data!,
+     firstDate: hoje,
+     lastDate: DateTime(agora.year +5,12,31),
+     helpText: 'Seleciona a data do passeio',
+     cancelText: 'Cancelar',
+     confirmText: 'Confirmar',
+     );
+
+     if (!mounted || dataSelecionada == null) return;
+
+     setState(() {
+        _data = dataSelecionada;
+        _erroDataHora = null;
+     });
+  }
+
+  Future<void> selecionarHora() async {
+    final horaSelecionada = await showTimePicker(
+      context: context,
+      initialTime: _hora ?? TimeOfDay.now(),
+      helpText: 'Seleciona a hora de partida',
+      cancelText: 'Cancelar.',
+      confirmText: 'Confirmar',
+      builder: (context, child){
+        return MediaQuery(
+          data: MediaQuery.of(context).copyWith(
+            alwaysUse24HourFormat: true,
+        ), 
+        child: child!,
+        );
+      },
+    );
+
+    if(!mounted || horaSelecionada == null) return;
+
+    setState(() {
+      _hora = horaSelecionada;
+      _erroDataHora = null;
+    });
+  }
+
+  void guardarPasseio(){
+    final camposValidos = _formKey.currentState!.validate();
+
+    DateTime? dataHora;
+    String? erro;
+
+    if (_data == null || _hora == null){
+      erro = 'Seleciona a data e a hora do passeio';
+    } else {
+      dataHora = DateTime(
+        _data!.year,
+        _data!.month,
+        _data!.day,
+        _hora!.hour,
+        _hora!.minute,
+      );
+
+      if(!dataHora.isAfter(DateTime.now())){
+        erro = 'Escolhe uma data e hora futuras.';
+      }
+    }
+    setState(() {
+      _erroDataHora = erro;
+    });
+
+    if(!camposValidos || erro != null || dataHora == null) return;
+
+    final passeio = Passeio(
+      nome: _nomeController.text.trim(),
+      descricao: _descricaoController.text.trim(), 
+      partida: _partidaController.text.trim(), 
+      destino: _destinoController.text.trim(), 
+      dataHora: dataHora,
+    );
+
+    Navigator.of(context).pop(passeio);
+  }
+  InputDecoration decoracao(String titulo, IconData icon){
+    return InputDecoration(
+      labelText: titulo,
+      prefixIcon: Icon(icon),
+      border: const OutlineInputBorder(),
+      alignLabelWithHint: true,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context){
+    String doisDigitos(int numero) => numero.toString().padLeft(2, '0');
+
+    final textoData = _data == null
+        ? 'Selecionar data'
+        : '${doisDigitos(_data!.day)}/'
+            '${doisDigitos(_data!.month)}/${_data!.year}';
+    
+    final textoHora = _hora == null
+        ? 'Selecionar hora'
+        : '${doisDigitos(_hora!.hour)}:${doisDigitos(_hora!.minute)}';
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Criar Passeio'),
+      ),
+      body: SafeArea(
+        child: Form(
+          key: _formKey,
+          child: ListView(
+            padding: const EdgeInsets.all(20),
+            children: [
+              const Text(
+                'Planeia a proxima aventura!',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Define o percurso e combina a partida com o grupo.',
+                style: TextStyle(color: Colors.white60),
+              ),
+              const SizedBox(height: 24),
+              TextFormField(
+                controller: _nomeController,
+                decoration: decoracao(
+                  'Nome do passeio', 
+                  Icons.route
+                ),
+                textCapitalization: TextCapitalization.sentences,
+                textInputAction: TextInputAction.next,
+                validator: validarObrigatorio,
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _descricaoController,
+                decoration: decoracao(
+                  'Descrição (opcional)', 
+                  Icons.description_outlined,
+                ),
+                textCapitalization: TextCapitalization.sentences,
+                maxLines: 3,
+                maxLength: 500,
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _partidaController,
+                decoration: decoracao(
+                  'Local de Partida', 
+                  Icons.trip_origin,
+                ),
+                textCapitalization: TextCapitalization.words,
+                textInputAction: TextInputAction.next,
+                validator: validarObrigatorio,
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _destinoController,
+                decoration: decoracao(
+                  'Destino', 
+                  Icons.location_on_outlined
+                ),
+                textCapitalization: TextCapitalization.words,
+                textInputAction: TextInputAction.done,
+                validator: validarObrigatorio,
+              ),
+              const SizedBox(height: 24),
+              OutlinedButton.icon(
+                onPressed: selecionarData,
+                icon: const Icon(Icons.calendar_month), 
+                label: Text(textoData),
+              ),
+              const SizedBox(height: 8),
+              OutlinedButton.icon(
+                onPressed: selecionarHora,
+                icon: const Icon(Icons.schedule),
+                label: Text(textoHora),
+              ),
+              if(_erroDataHora != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Text(
+                    _erroDataHora!,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.error,
+                    ),
+                  ),
+                ),
+              const SizedBox(height: 32),
+              FilledButton.icon(
+                onPressed: guardarPasseio,
+                icon: const Icon(Icons.check),
+                label: const Text('Guardar passeio'),
+              ),  
+            ],
+          ),
+        ),
       ),
     );
   }
