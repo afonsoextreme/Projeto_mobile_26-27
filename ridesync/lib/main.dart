@@ -123,6 +123,73 @@ class _PasseioScreenState extends State<PasseiosScreen>{
     );
   }
 
+  Future<void> editarPasseio(Passeio passeio) async{
+    final passeioEditado = await Navigator.of(context).push<Passeio>(
+      MaterialPageRoute(
+        builder: (context) => CriarPasseioScreen(
+          passeio: passeio,
+        ),
+      ),
+    );
+
+    if(!mounted || passeioEditado == null) return;
+
+    final indice = passeios.indexOf(passeio);
+    
+    if(indice == -1) return;
+
+    setState(() {
+      passeios[indice] = passeioEditado;
+
+      passeios.sort(
+        (a, b) => a.dataHora.compareTo(b.dataHora),
+      );
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Passeio atualizado com sucesso!'),
+      ),
+    );
+  }
+
+  Future<void> apagarPasseio(Passeio passeio) async {
+    final confirmar = await showDialog<bool>(
+      context: context, 
+      builder: (context) => AlertDialog(
+        title: const Text('Apagar passeio'),
+        content: Text(
+          'Queres apagar o passeio "${passeio.nome}"?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false), 
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true), 
+            child: const Text(
+              'Apagar',
+              style: TextStyle(color: Colors.red),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if(!mounted || confirmar != true) return;
+
+    setState(() {
+      passeios.remove(passeio);
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Passeio Apagado.'),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return ListView(
@@ -188,7 +255,10 @@ class _PasseioScreenState extends State<PasseiosScreen>{
               percurso: '${passeio.partida} -> ${passeio.destino}', 
               data: formatarData(passeio.dataHora), 
               participantes: 1, 
-              icon: Icons.route
+              limiteParticipantes: passeio.limiteParticipantes,
+              icon: Icons.route,
+              onEditar: () => editarPasseio(passeio),
+              onApagar: () => apagarPasseio(passeio),
             ),
           ),
         ),
@@ -207,6 +277,7 @@ class Passeio {
   final String partida;
   final String destino;
   final DateTime dataHora;
+  final int limiteParticipantes;
 
   const Passeio({
     required this.nome,
@@ -214,6 +285,7 @@ class Passeio {
     required this.partida,
     required this.destino,
     required this.dataHora,
+    required this.limiteParticipantes,
   }); 
 }
 
@@ -223,6 +295,9 @@ class PasseioCard extends StatelessWidget{
   final String data;
   final int participantes;
   final IconData icon;
+  final VoidCallback onEditar;
+  final VoidCallback onApagar;
+  final int limiteParticipantes;
 
   const PasseioCard({
     super.key,
@@ -231,11 +306,13 @@ class PasseioCard extends StatelessWidget{
     required this.data,
     required this.participantes,
     required this.icon,
+    required this.onEditar,
+    required this.onApagar,
+    required this.limiteParticipantes,
   });
 
   @override
   Widget build(BuildContext context) {
-    // TODO: implement build
     return Card(
       margin: EdgeInsets.zero,
       child: Padding(
@@ -243,7 +320,51 @@ class PasseioCard extends StatelessWidget{
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(icon, color: Colors.orange, size: 36),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Icon(icon, color: Colors.orange, size: 36
+                ),
+                PopupMenuButton<String>(
+                  tooltip: 'Opções do Passeio',
+                  onSelected: (opcao){
+                    if(opcao == 'Editar'){
+                      onEditar();
+                    } else if (opcao == 'Apagar'){
+                      onApagar();
+                    }
+                  },
+                  itemBuilder: (context) => const[
+                    PopupMenuItem(
+                      value: 'Editar',
+                      child: Row(
+                        children: [
+                          Icon(Icons.edit_outlined),
+                          SizedBox(width: 12),
+                          Text('Editar'),
+                        ],
+                      )
+                    ),
+                    PopupMenuItem(
+                      value: 'apagar',
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.delete_outline,
+                            color: Colors.red,
+                          ),
+                          SizedBox(width: 12),
+                          Text(
+                            'Apagar',
+                            style: TextStyle(color: Colors.red),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
             const SizedBox(height: 16),
             Text(
               titulo,
@@ -260,10 +381,11 @@ class PasseioCard extends StatelessWidget{
               style: const TextStyle(color: Colors.white60),
             ),
             const Divider(height: 28),
-            Row(children: [
-              const Icon(Icons.group_outlined, size: 20),
-              const SizedBox(width: 8),
-              Text('$participantes participantes'),
+            Row(
+              children: [
+                const Icon(Icons.group_outlined, size: 20),
+                const SizedBox(width: 8),
+                Text('$participantes / $limiteParticipantes participantes'),
               ],
             ),
           ],
@@ -371,7 +493,8 @@ class PerfilScreen extends StatelessWidget{
 }
 
 class CriarPasseioScreen extends StatefulWidget{
-  const CriarPasseioScreen({super.key});
+  final Passeio? passeio;
+  const CriarPasseioScreen({super.key,this.passeio});
 
   @override
   State<CriarPasseioScreen> createState() => _CriarPasseioScreenState();
@@ -384,17 +507,41 @@ class _CriarPasseioScreenState extends State<CriarPasseioScreen> {
   final _descricaoController = TextEditingController();
   final _partidaController = TextEditingController();
   final _destinoController = TextEditingController();
+  final _limiteParticipantesController = TextEditingController(
+    text: '10',
+  );
 
   DateTime? _data;
   TimeOfDay? _hora;
   String? _erroDataHora;
 
   @override
+  void initState(){
+    super.initState();
+
+    final passeio = widget.passeio;
+
+    if(passeio != null){
+      _nomeController.text = passeio.nome;
+      _descricaoController.text = passeio.descricao;
+      _partidaController.text = passeio.partida;
+      _destinoController.text = passeio.destino;
+      _limiteParticipantesController.text = passeio.limiteParticipantes.toString();
+
+      _data = DateTime(
+        passeio.dataHora.year,
+        passeio.dataHora.month,
+        passeio.dataHora.day,
+      );
+      _hora =TimeOfDay.fromDateTime(passeio.dataHora);
+    }
+  }
   void dispose(){
     _nomeController.dispose();
     _descricaoController.dispose();
     _partidaController.dispose();
     _destinoController.dispose();
+    _limiteParticipantesController.dispose();
     super.dispose();
   }
   String? validarObrigatorio(String? valor){
@@ -485,7 +632,11 @@ class _CriarPasseioScreenState extends State<CriarPasseioScreen> {
       partida: _partidaController.text.trim(), 
       destino: _destinoController.text.trim(), 
       dataHora: dataHora,
+      limiteParticipantes: int.parse(
+        _limiteParticipantesController.text.trim(),
+      ),
     );
+
 
     Navigator.of(context).pop(passeio);
   }
@@ -513,7 +664,9 @@ class _CriarPasseioScreenState extends State<CriarPasseioScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Criar Passeio'),
+        title: Text(
+          widget.passeio == null ? 'Criar Passeio': 'Editar Passeio',
+        ),
       ),
       body: SafeArea(
         child: Form(
@@ -577,6 +730,25 @@ class _CriarPasseioScreenState extends State<CriarPasseioScreen> {
                 textInputAction: TextInputAction.done,
                 validator: validarObrigatorio,
               ),
+              TextFormField(
+                controller:  _limiteParticipantesController,
+                decoration: decoracao(
+                  'Limite de participantes', 
+                  Icons.group_outlined,
+                ),
+                keyboardType: TextInputType.number,
+                textInputAction: TextInputAction.done,
+                validator: (valor){
+                  final limite = int.tryParse(valor?.trim() ?? '');
+                  
+                  if(limite == null || limite < 1){
+                    return 'Introduz um numero igual ou superior a 1.';
+                  }
+
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16),
               const SizedBox(height: 24),
               OutlinedButton.icon(
                 onPressed: selecionarData,
@@ -603,7 +775,9 @@ class _CriarPasseioScreenState extends State<CriarPasseioScreen> {
               FilledButton.icon(
                 onPressed: guardarPasseio,
                 icon: const Icon(Icons.check),
-                label: const Text('Guardar passeio'),
+                label: Text(
+                  widget.passeio == null ? 'Guardar Passeio' : 'Guardar Alterações',
+                ),
               ),  
             ],
           ),
