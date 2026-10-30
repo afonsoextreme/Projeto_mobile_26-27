@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:ridesync/models/passeio.dart';
 import 'package:ridesync/widgets/passeio_card.dart';
 import 'criar_passeio_screen.dart';
+import 'detalhes_passeio_screen.dart';
 
 class PasseiosScreen extends StatefulWidget{
   const PasseiosScreen({super.key});
@@ -17,7 +18,7 @@ class _PasseioScreenState extends State<PasseiosScreen>{
     String doisDigitos(int numero) => numero.toString().padLeft(2, '0');
 
     return '${doisDigitos(data.day)}/${doisDigitos(data.month)}/${data.year}'
-        '${doisDigitos(data.hour)}:${doisDigitos(data.minute)}';
+        ' - ${doisDigitos(data.hour)}:${doisDigitos(data.minute)}';
   }
 
   Future<void> criarPasseio() async{
@@ -43,6 +44,8 @@ class _PasseioScreenState extends State<PasseiosScreen>{
   }
 
   Future<void> editarPasseio(Passeio passeio) async{
+    if(passeio.cancelado) return;
+
     final passeioEditado = await Navigator.of(context).push<Passeio>(
       MaterialPageRoute(
         builder: (context) => CriarPasseioScreen(
@@ -72,42 +75,60 @@ class _PasseioScreenState extends State<PasseiosScreen>{
     );
   }
 
-  Future<void> apagarPasseio(Passeio passeio) async {
+  Future<void> cancelarPasseio(Passeio passeio) async {
+    if(passeio.cancelado) return;
+
     final confirmar = await showDialog<bool>(
       context: context, 
       builder: (context) => AlertDialog(
-        title: const Text('Apagar passeio'),
+        title: const Text('Cancelar Passeio'),
         content: Text(
-          'Queres apagar o passeio "${passeio.nome}"?',
+          'Queres cancelar o passeio "${passeio.nome}"?\n\n'
+          'O passeio continuará na lista como cancelado.',
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(context).pop(false), 
-            child: const Text('Cancelar'),
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Voltar'),
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true), 
             child: const Text(
-              'Apagar',
+              'Cancelar Passeio',
               style: TextStyle(color: Colors.red),
-            ),
+            )
           ),
         ],
       ),
     );
 
     if(!mounted || confirmar != true) return;
+    
+    final indice = passeios.indexOf(passeio);
+
+    if (indice == -1) return;
 
     setState(() {
-      passeios.remove(passeio);
+      passeios[indice] = passeio.cancelar();
     });
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Passeio Apagado.'),
+        content: Text('Passeio Cancelado.'),
       ),
     );
   }
+
+  void abrirDetalhes(Passeio passeio){
+      Navigator.of(context).push<void>(
+        MaterialPageRoute(
+          builder: (context) =>DetalhesPasseioScreen(
+            passeio: passeio, 
+            participantes: 1,
+          ),
+        ),
+      );
+    }
 
   @override
   Widget build(BuildContext context) {
@@ -176,8 +197,10 @@ class _PasseioScreenState extends State<PasseiosScreen>{
               participantes: 1, 
               limiteParticipantes: passeio.limiteParticipantes,
               icon: Icons.route,
+              cancelado: passeio.cancelado,
+              onAbrir: () => abrirDetalhes(passeio),
               onEditar: () => editarPasseio(passeio),
-              onApagar: () => apagarPasseio(passeio),
+              onCancelar: () => cancelarPasseio(passeio),
             ),
           ),
         ),

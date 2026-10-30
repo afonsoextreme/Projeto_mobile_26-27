@@ -26,7 +26,7 @@ class _MainScreenState extends State<MainScreen>{
         title: const Text(
           'RideSync', style: TextStyle(fontWeight: FontWeight.bold),
         ),
-        centerTitle:  false,
+        centerTitle:  true,
       ),
       body: IndexedStack(
         index: paginaAtual,

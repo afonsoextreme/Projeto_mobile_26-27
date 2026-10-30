@@ -5,6 +5,7 @@ class Passeio {
   final String destino;
   final DateTime dataHora;
   final int limiteParticipantes;
+  final bool cancelado;
 
   const Passeio({
     required this.nome,
@@ -13,5 +14,18 @@ class Passeio {
     required this.destino,
     required this.dataHora,
     required this.limiteParticipantes,
+    this.cancelado = false,
   }); 
+
+  Passeio cancelar(){
+    return Passeio(
+      nome: nome, 
+      descricao: descricao, 
+      partida: partida, 
+      destino: destino, 
+      dataHora: dataHora, 
+      limiteParticipantes: limiteParticipantes, 
+      cancelado: true,
+    );
+  }
 }

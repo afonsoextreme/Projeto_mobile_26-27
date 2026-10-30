@@ -154,7 +154,6 @@ class _CriarPasseioScreenState extends State<CriarPasseioScreen> {
     return InputDecoration(
       labelText: titulo,
       prefixIcon: Icon(icon),
-      border: const OutlineInputBorder(),
       alignLabelWithHint: true,
     );
   }
