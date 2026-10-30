@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ridesync/models/veiculo.dart';
+import 'package:ridesync/theme/app_theme.dart';
 
 class CriarVeiculoScreen extends StatefulWidget{
   final Veiculo? veiculo;
@@ -111,20 +112,46 @@ class _CriarPasseioScreenState extends State<CriarVeiculoScreen>{
                 spacing: 12,
                 children: [
                   ChoiceChip(
-                    avatar: const Icon(Icons.directions_car),
-                    label: const Text('Carro'), 
+                    avatar: Icon(
+                      Icons.directions_car,
+                      color: _tipo == 'Carro'
+                          ? AppTheme.branco
+                          : AppTheme.asfalto,
+                    ),
+                    label: const Text('Carro'),
+                    labelStyle: TextStyle(
+                      color: _tipo == 'Carro'
+                          ? AppTheme.branco
+                          : AppTheme.asfalto,
+                    ),
+                    selectedColor: AppTheme.asfalto,
+                    backgroundColor: AppTheme.branco,
+                    checkmarkColor: AppTheme.branco,
                     selected: _tipo == 'Carro',
-                    onSelected: (_) {
+                    onSelected: (_){
                       setState(() {
                         _tipo = 'Carro';
                       });
                     },
                   ),
                   ChoiceChip(
-                    avatar: const Icon(Icons.two_wheeler),
+                    avatar: Icon(
+                      Icons.two_wheeler,
+                      color: _tipo == 'Mota'
+                          ? AppTheme.branco
+                          : AppTheme.asfalto,
+                    ),
                     label: const Text('Mota'), 
+                    labelStyle: TextStyle(
+                      color: _tipo == 'Mota'
+                          ? AppTheme.branco
+                          : AppTheme.asfalto,
+                    ),
+                    selectedColor: AppTheme.asfalto,
+                    backgroundColor: AppTheme.branco,
+                    checkmarkColor: AppTheme.branco,
                     selected: _tipo == 'Mota',
-                    onSelected: (_){
+                    onSelected:(_) {
                       setState(() {
                         _tipo = 'Mota';
                       });

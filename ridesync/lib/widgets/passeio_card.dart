@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ridesync/theme/app_theme.dart';
 
 class PasseioCard extends StatelessWidget{
   final String titulo;
@@ -44,7 +45,7 @@ class PasseioCard extends StatelessWidget{
                 children: [
                   Icon(
                     icon,
-                    color: cancelado ? Colors.grey : Colors.orange,
+                    color: cancelado ? AppTheme.cinza : AppTheme.asfalto,
                     size: 36,
                   ),
                   if(!cancelado)

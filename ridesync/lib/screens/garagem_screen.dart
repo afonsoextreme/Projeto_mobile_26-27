@@ -141,7 +141,7 @@ class _GaragemScreenState extends State<GaragemScreen>{
                 veiculo.tipo == 'Carro'
                     ? Icons.directions_car
                     : Icons.two_wheeler,
-                color: Colors.orange,
+                color: AppTheme.asfalto,
                 size: 36,
               ),
               title: Text(
