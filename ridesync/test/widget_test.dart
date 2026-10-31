@@ -11,20 +11,21 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:ridesync/app.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
+  testWidgets('Mostra os separadores principais', (tester) async {
     await tester.pumpWidget(const RideSyncApp());
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    final navegacao = find.byType(NavigationBar);
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+    expect(navegacao, findsOneWidget);
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    for(final nome in ['Passeios', 'Garagem', 'Perfil']) {
+      expect(
+        find.descendant(
+            of: navegacao, 
+            matching: find.text(nome),
+          ),
+          findsOneWidget,
+      );
+    }
   });
 }

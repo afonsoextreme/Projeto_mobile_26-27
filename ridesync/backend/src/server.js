@@ -1,8 +1,10 @@
 const express = require('express');
+const cors = require('cors');
 
 const app = express();
 const PORT = 3000;
 
+app.use(cors());
 app.use(express.json());
 
 app.get('/api/health',(req, res) => {
@@ -22,7 +24,7 @@ const passeios = [
         destino: 'Portinho da Arrabida',
         data: '2026-11-15T10:00:00',
         limiteParticipantes: 15,
-        particpantes: 1,
+        participantes: 1,
         estado: 'publicado',
     },
 ];

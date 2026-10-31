@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:ridesync/models/passeio.dart';
+import 'package:ridesync/models/veiculo.dart';
+import 'package:ridesync/services/garagem_store.dart';
 
-class DetalhesPasseioScreen extends StatelessWidget {
+class DetalhesPasseioScreen extends StatefulWidget {
   final Passeio passeio;
   final int participantes;
 
@@ -10,6 +12,16 @@ class DetalhesPasseioScreen extends StatelessWidget {
     required this.passeio,
     required this.participantes,
   });
+
+  @override
+  State<DetalhesPasseioScreen> createState() => _DetalhesPasseioScreenState();
+}
+
+  class _DetalhesPasseioScreenState extends State<DetalhesPasseioScreen> {
+    Veiculo? _veiculoSelecionado;
+
+    Passeio get passeio => widget.passeio;
+    int get participantes => widget.participantes;
 
   String formatarData(DateTime data) {
     String doisDigitos(int numero) => numero.toString().padLeft(2, '0');
@@ -32,6 +44,66 @@ class DetalhesPasseioScreen extends StatelessWidget {
         subtitle: Text(valor),
       ),
     );
+  }
+
+  Future<void> escolherVeiculo() async{
+    if(passeio.cancelado) return;
+
+    if(GaragemStore.veiculos.isEmpty){
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Adiciona primeiro um carro ou mota na Garagem',
+          ),
+        ),
+      );
+      return;
+    }
+
+    final escolhido = await showModalBottomSheet<Veiculo>(
+      context: context,
+      showDragHandle: true, 
+      builder: (context){
+        return SafeArea(
+          child: ListView(
+            shrinkWrap: true,
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+            children: [
+              Text(
+                'Escoher veiculo',
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+              const SizedBox(height: 12),
+              ...GaragemStore.veiculos.map(
+                (veiculo) => ListTile(
+                  leading: Icon(
+                    veiculo.tipo == 'Carro'
+                        ? Icons.directions_car
+                        : Icons.two_wheeler,
+                  ),
+                  title: Text(
+                    '${veiculo.marca} ${veiculo.modelo}',
+                  ),
+                  subtitle: Text(veiculo.matricula),
+                  trailing: identical(veiculo, _veiculoSelecionado)
+                      ? const Icon(Icons.check)
+                      : null,
+                  onTap: (){
+                    Navigator.of(context).pop(veiculo);
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      }
+    );
+
+    if(!mounted || escolhido == null) return;
+
+    setState(() {
+      _veiculoSelecionado = escolhido;
+    });
   }
 
   @override
@@ -99,6 +171,29 @@ class DetalhesPasseioScreen extends StatelessWidget {
                   '$participantes / '
                   '${passeio.limiteParticipantes} participantes',
             ),
+            if(_veiculoSelecionado != null)
+              informacao(
+                icon: _veiculoSelecionado!.tipo == 'Carro'
+                    ? Icons.directions_car
+                    : Icons.two_wheeler,
+                titulo: 'Veiculo escolhido', 
+                valor: '${_veiculoSelecionado!.marca}'
+                    '${_veiculoSelecionado!.modelo}\n'
+                    '${_veiculoSelecionado!.matricula}',
+              ),
+
+            FilledButton.icon(
+              onPressed: passeio.cancelado ? null : escolherVeiculo,
+              icon: const Icon(Icons.directions_car_outlined), 
+              label: Text(
+                _veiculoSelecionado == null
+                    ? 'Escolher veiculo'
+                    :'Alterar veiculo',
+              ),
+            ),
+
+            const SizedBox(height: 12),
+            
             if (passeio.cancelado)
               const Padding(
                 padding: EdgeInsets.only(top: 12),

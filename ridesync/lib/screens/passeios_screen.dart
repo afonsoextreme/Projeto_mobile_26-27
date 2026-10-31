@@ -3,6 +3,7 @@ import 'package:ridesync/models/passeio.dart';
 import 'package:ridesync/widgets/passeio_card.dart';
 import 'criar_passeio_screen.dart';
 import 'detalhes_passeio_screen.dart';
+import 'package:ridesync/services/passeios_service.dart';
 
 class PasseiosScreen extends StatefulWidget{
   const PasseiosScreen({super.key});
@@ -13,6 +14,45 @@ class PasseiosScreen extends StatefulWidget{
 
 class _PasseioScreenState extends State<PasseiosScreen>{
   final List <Passeio> passeios = [];
+
+  bool _aCarregar = true;
+  String? _erroCarregamento = null;
+
+  @override
+  void initState() {
+    super.initState();
+    carregarPasseios();
+  }
+
+  Future<void> carregarPasseios() async {
+    setState(() {
+      _aCarregar = true;
+      _erroCarregamento = null;
+    });
+
+    try{
+      final resultado = await PasseiosService.listarPasseios();
+      
+      if(!mounted) return;
+
+      setState(() {
+        passeios.clear();
+        passeios.addAll(resultado);
+        _aCarregar = false;
+      });
+    } catch (erro) {
+      debugPrint('Erro ao carregar passeios: $erro');
+
+      if(!mounted) return;
+
+      setState(() {
+        _aCarregar = false;
+        _erroCarregamento =
+            'Não foi Possivel carregar os passeios.'
+            'Verifica se o backend está ligado.';
+      });
+    }
+  }
 
   String formatarData(DateTime data){
     String doisDigitos(int numero) => numero.toString().padLeft(2, '0');
@@ -149,7 +189,9 @@ class _PasseioScreenState extends State<PasseiosScreen>{
         ),
         const SizedBox(height: 24),
         FilledButton.icon(
-          onPressed: criarPasseio, 
+          onPressed: _aCarregar || _erroCarregamento != null
+              ? null
+              : criarPasseio, 
           icon: const Icon(Icons.add),
           label: const Text('Criar Passeio'),
         ),
@@ -162,7 +204,31 @@ class _PasseioScreenState extends State<PasseiosScreen>{
           ),
         ),
         const SizedBox(height: 16),
-        if(passeios.isEmpty)
+        if (_aCarregar)
+          const Padding(
+            padding:EdgeInsets.all(24),
+            child: Center(
+              child: CircularProgressIndicator(),
+            ),
+          ),
+          if (_erroCarregamento != null)
+            Column(
+              children: [
+                Text(
+                  _erroCarregamento!,
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 12),
+                OutlinedButton.icon(
+                  onPressed: carregarPasseios,
+                  icon: const Icon(Icons.refresh), 
+                  label: const Text('Tentar Novamente'),
+                ),
+              ],
+            ),
+        if(!_aCarregar && 
+        _erroCarregamento == null &&
+        passeios.isEmpty)
         const Card(
           child: Padding(
             padding: EdgeInsets.all(24),

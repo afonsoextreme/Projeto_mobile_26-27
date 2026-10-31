@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:ridesync/models/veiculo.dart';
 import 'criar_veiculo_screen.dart';
 import 'package:ridesync/theme/app_theme.dart';
+import 'package:ridesync/services/garagem_store.dart';
 
 class GaragemScreen extends StatefulWidget{
   const GaragemScreen({super.key});
@@ -11,7 +12,7 @@ class GaragemScreen extends StatefulWidget{
 }
 
 class _GaragemScreenState extends State<GaragemScreen>{
-  final List<Veiculo> veiculos =[];
+  final List<Veiculo> veiculos = GaragemStore.veiculos;
 
   Future<void> abrirFormulario({Veiculo? veiculo}) async {
     final resultado = await Navigator.of(context).push<Veiculo>(
