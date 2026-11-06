@@ -4,6 +4,7 @@ import 'package:ridesync/widgets/passeio_card.dart';
 import 'criar_passeio_screen.dart';
 import 'detalhes_passeio_screen.dart';
 import 'package:ridesync/services/passeios_service.dart';
+import 'package:ridesync/services/verificar_sessao.dart';
 
 class PasseiosScreen extends StatefulWidget{
   const PasseiosScreen({super.key});
@@ -16,7 +17,7 @@ class _PasseioScreenState extends State<PasseiosScreen>{
   final List <Passeio> passeios = [];
 
   bool _aCarregar = true;
-  String? _erroCarregamento = null;
+  String? _erroCarregamento;
 
   @override
   void initState() {
@@ -62,6 +63,7 @@ class _PasseioScreenState extends State<PasseiosScreen>{
   }
 
   Future<void> criarPasseio() async{
+    if(!verificarSessao(context)) return;
     final novoPasseio = await Navigator.of(context).push<Passeio>(
       MaterialPageRoute(
         builder: (context) => const CriarPasseioScreen(),
@@ -84,7 +86,8 @@ class _PasseioScreenState extends State<PasseiosScreen>{
   }
 
   Future<void> editarPasseio(Passeio passeio) async{
-    if(passeio.cancelado) return;
+    if(!verificarSessao(context)) return;
+    if(!passeio.souOrganizador || !passeio.agendado) return;
 
     final passeioEditado = await Navigator.of(context).push<Passeio>(
       MaterialPageRoute(
@@ -100,8 +103,24 @@ class _PasseioScreenState extends State<PasseiosScreen>{
     
     if(indice == -1) return;
 
+    if(passeioEditado.limiteParticipantes < passeio.participantes){
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'O limite não pode ser inferior ao numero atual de participantes',
+          ),
+        ),
+      );
+      return;
+    }
+
     setState(() {
-      passeios[indice] = passeioEditado;
+      passeios[indice] = passeioEditado.copywith(
+        cancelado: passeio.cancelado,
+        participantesBase: passeio.participantesBase,
+        inscrito: passeio.inscrito,
+        veiculoSelecionado: passeio.veiculoSelecionado,
+      );
 
       passeios.sort(
         (a, b) => a.dataHora.compareTo(b.dataHora),
@@ -116,7 +135,8 @@ class _PasseioScreenState extends State<PasseiosScreen>{
   }
 
   Future<void> cancelarPasseio(Passeio passeio) async {
-    if(passeio.cancelado) return;
+    if(!verificarSessao(context)) return;
+    if(!passeio.souOrganizador|| !passeio.agendado) return;
 
     final confirmar = await showDialog<bool>(
       context: context, 
@@ -164,7 +184,18 @@ class _PasseioScreenState extends State<PasseiosScreen>{
         MaterialPageRoute(
           builder: (context) =>DetalhesPasseioScreen(
             passeio: passeio, 
-            participantes: 1,
+            onAtualizar: (atualizado) {
+              if(!mounted) return;
+
+              final indice = passeios.indexOf(passeio);
+              if(indice == -1) return;
+
+              setState(() {
+                passeios[indice] = atualizado;
+              });
+
+              passeio = atualizado;
+            },
           ),
         ),
       );
@@ -260,10 +291,12 @@ class _PasseioScreenState extends State<PasseiosScreen>{
               titulo: passeio.nome, 
               percurso: '${passeio.partida} -> ${passeio.destino}', 
               data: formatarData(passeio.dataHora), 
-              participantes: 1, 
+              participantes: passeio.participantes, 
               limiteParticipantes: passeio.limiteParticipantes,
               icon: Icons.route,
               cancelado: passeio.cancelado,
+              souOrganizador: passeio.souOrganizador,
+              agendado: passeio.agendado,
               onAbrir: () => abrirDetalhes(passeio),
               onEditar: () => editarPasseio(passeio),
               onCancelar: () => cancelarPasseio(passeio),

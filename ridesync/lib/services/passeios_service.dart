@@ -29,7 +29,8 @@ class PasseiosService {
         destino: json['destino'] as String, 
         dataHora: DateTime.parse(json['data'] as String), 
         limiteParticipantes: json['limiteParticipantes'] as int,
-        cancelado: json['estado'] == 'cancelado'
+        cancelado: json['estado'] == 'cancelado',
+        participantesBase: json['participantes'] as int? ?? 1,
       );
     }).toList();
 

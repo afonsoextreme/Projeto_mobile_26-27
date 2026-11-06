@@ -136,6 +136,8 @@ class _CriarPasseioScreenState extends State<CriarPasseioScreen> {
 
     if(!camposValidos || erro != null || dataHora == null) return;
 
+    final anterior = widget.passeio;
+
     final passeio = Passeio(
       nome: _nomeController.text.trim(),
       descricao: _descricaoController.text.trim(), 
@@ -145,9 +147,14 @@ class _CriarPasseioScreenState extends State<CriarPasseioScreen> {
       limiteParticipantes: int.parse(
         _limiteParticipantesController.text.trim(),
       ),
+
+      souOrganizador: anterior?.souOrganizador ?? true,
+
+      estado: anterior?.estado ?? EstadoPasseio.agendado,
+      participantesBase: anterior?.participantesBase ?? 1,
+      inscrito: anterior?.inscrito ?? false,
+      veiculoSelecionado: anterior?.veiculoSelecionado,
     );
-
-
     Navigator.of(context).pop(passeio);
   }
   InputDecoration decoracao(String titulo, IconData icon){

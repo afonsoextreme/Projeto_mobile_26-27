@@ -12,6 +12,8 @@ class PasseioCard extends StatelessWidget{
   final VoidCallback onEditar;
   final VoidCallback onCancelar;
   final VoidCallback onAbrir;
+  final bool souOrganizador;
+  final bool agendado;
   
 
   const PasseioCard({
@@ -26,6 +28,8 @@ class PasseioCard extends StatelessWidget{
     required this.onEditar,
     required this.onCancelar,
     required this.onAbrir,
+    required this.souOrganizador,
+    required this.agendado,
   });
 
   @override
@@ -48,7 +52,7 @@ class PasseioCard extends StatelessWidget{
                     color: cancelado ? AppTheme.cinza : AppTheme.asfalto,
                     size: 36,
                   ),
-                  if(!cancelado)
+                  if(souOrganizador && agendado)
                     PopupMenuButton<String>(
                       tooltip: 'Opções do Passeio',
                       onSelected: (opcao){
