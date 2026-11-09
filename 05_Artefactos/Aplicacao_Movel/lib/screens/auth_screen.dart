@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:ridesync/services/sessao_store.dart';
+import 'package:ridesync/services/auth_service.dart';
 
 class AuthScreen extends StatefulWidget{
   final bool iniciarNoRegisto;
@@ -24,6 +24,7 @@ class _AuthScreenState extends State<AuthScreen> {
   late bool _registo = false;
   bool _ocultarPassword = true;
   bool _ocultarConfirmacao = true;
+  bool _aEnviar = false;
 
   @override
   void initState(){
@@ -52,20 +53,47 @@ class _AuthScreenState extends State<AuthScreen> {
     });
   }
 
-  void submeter() {
+  Future <void> submeter() async {
+    if(_aEnviar) return;
     if(!_formKey.currentState!.validate()) return;
 
     FocusScope.of(context).unfocus();
+    setState(() {
+      _aEnviar = true;
+    });
 
-    //ISTO VAI SERVIR SO PARA SIMULAR ATE TER BD + API :)
-    SessaoStore.entrar(
-      nomeUtilizador: _registo
-          ? _nomeController.text.trim()
-          :'Utilizador de demonstração', 
-      emailUtilizador: _emailController.text.trim(),
-    );
+    try {
+      await AuthService.autenticar(
+        registo: _registo,
+        nome: _nomeController.text.trim(), 
+        email: _emailController.text.trim(), 
+        password: _passwordController.text,
+      );
 
-    Navigator.of(context).pop(true);
+      if(!mounted) return;
+      
+      Navigator.of(context).pop(true);
+    } on AuthException catch (erro) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(erro.mensagem)),
+      );
+    } catch (erro) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Ocorreu um erro ao iniciar sessão.'),
+        ),
+      );
+    } finally {
+      if(mounted) {
+        setState(() {
+          _aEnviar = false;
+        });
+      }
+    }
   }
 
   String? validarEmail(String? valor) {
@@ -225,6 +253,10 @@ class _AuthScreenState extends State<AuthScreen> {
                         ),
                         validator:(valor) {
                           if(valor == null || valor.isEmpty){
+                            return 'Confirma a tua palavra-passe.';
+                          }
+
+                          if (valor != _passwordController.text) {
                             return 'As palavras-passe não coincidem';
                           }
                           return null;
@@ -234,11 +266,16 @@ class _AuthScreenState extends State<AuthScreen> {
 
                     const SizedBox(height: 24),
                     FilledButton.icon(
-                      onPressed: submeter,
+                      onPressed: _aEnviar ? null : submeter,
                       icon: Icon(
                         _registo ? Icons.person_add_outlined : Icons.login,
                       ), 
-                      label: Text(_registo ? 'Criar Conta' : 'Entrar'),
+                      label: Text(_aEnviar
+                                      ?'Aguarda...'
+                                      :_registo
+                                          ? 'Criar Conta' 
+                                          : 'Entrar'
+                      ),
                     ),
                     const SizedBox(height: 12),
                     TextButton(

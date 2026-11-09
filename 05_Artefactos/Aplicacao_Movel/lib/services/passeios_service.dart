@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:ridesync/models/passeio.dart';
+import 'package:ridesync/services/sessao_store.dart';
 
 class PasseiosService {
   static const String baseUrl = 'http://localhost:3000';
@@ -24,6 +25,8 @@ class PasseiosService {
 
       return Passeio(
         id: json['id'] as int,
+        souOrganizador: SessaoStore.iniciada.value &&
+            json['organizadorId'] == SessaoStore.utilizadorId,
         nome: json['nome'] as String, 
         descricao: json['descricao'] as String, 
         partida: json ['partida'] as String, 
@@ -48,11 +51,18 @@ class PasseiosService {
   }
 
   static Future<Passeio> criarPasseio(Passeio passeio) async {
+      final token = SessaoStore.token;
+
+      if (token == null || token.isEmpty) {
+        throw Exception('Inicia sessão para criar um passeio');
+      }
+
       final resposta = await http
           .post(
             Uri.parse('$baseUrl/api/passeios'),
             headers: {
               'Content-Type' : 'application/json; charset=UTF-8',
+              'Authorization': 'Bearer $token',
             },
             body: jsonEncode({
               'nome': passeio.nome,
@@ -64,6 +74,11 @@ class PasseiosService {
             }),
           )
           .timeout(const Duration(seconds: 10));
+        if (resposta.statusCode == 401) {
+          SessaoStore.sair();
+
+          throw Exception('A sessão expirou. Entra novamente.');
+        }
 
       if (resposta.statusCode != 201) {
         throw Exception(

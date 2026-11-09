@@ -126,7 +126,9 @@ class PasseioCard extends StatelessWidget{
               const SizedBox(height: 8),
               Text(
                 data,
-                style: const TextStyle(color: Colors.white60),
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
               ),
               const Divider(height: 28),
               Row(

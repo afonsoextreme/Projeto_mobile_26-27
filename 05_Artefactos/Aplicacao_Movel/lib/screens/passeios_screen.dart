@@ -5,6 +5,7 @@ import 'criar_passeio_screen.dart';
 import 'detalhes_passeio_screen.dart';
 import 'package:ridesync/services/passeios_service.dart';
 import 'package:ridesync/services/verificar_sessao.dart';
+import 'package:ridesync/services/sessao_store.dart';
 
 class PasseiosScreen extends StatefulWidget{
   const PasseiosScreen({super.key});
@@ -18,39 +19,56 @@ class _PasseioScreenState extends State<PasseiosScreen>{
 
   bool _aCarregar = true;
   String? _erroCarregamento;
+  int _versaoCarregamento = 0;
 
   @override
   void initState() {
     super.initState();
+    SessaoStore.iniciada.addListener(_aoMudarSessao);
     carregarPasseios();
   }
 
+  void _aoMudarSessao() {
+    carregarPasseios();
+  }
+
+  @override
+  void dispose() {
+    SessaoStore.iniciada.removeListener(_aoMudarSessao);
+    super.dispose();
+  }
+
   Future<void> carregarPasseios() async {
+    if (!mounted) return;
+
+    final versao = ++_versaoCarregamento;
+
     setState(() {
       _aCarregar = true;
       _erroCarregamento = null;
+      passeios.clear();
     });
 
     try{
       final resultado = await PasseiosService.listarPasseios();
       
-      if(!mounted) return;
+      if(!mounted || versao != _versaoCarregamento) return;
 
       setState(() {
-        passeios.clear();
-        passeios.addAll(resultado);
+        passeios
+          ..clear()
+          ..addAll(resultado);
         _aCarregar = false;
       });
     } catch (erro) {
       debugPrint('Erro ao carregar passeios: $erro');
 
-      if(!mounted) return;
+      if(!mounted || versao != _versaoCarregamento) return;
 
       setState(() {
         _aCarregar = false;
         _erroCarregamento =
-            'Não foi Possivel carregar os passeios.'
-            'Verifica se o backend está ligado.';
+            'Não foi possivel carregar os passeios. Tenta novamente';
       });
     }
   }
