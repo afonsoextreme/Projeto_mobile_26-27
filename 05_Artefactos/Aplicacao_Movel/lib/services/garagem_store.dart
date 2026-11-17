@@ -63,6 +63,13 @@ class GaragemStore {
               body: jsonEncode(veiculo!.toJson()),
             );
             break;
+          case 'PUT':
+          pedido = http.put(
+            uri,
+            headers: headers,
+            body: jsonEncode(veiculo!.toJson()),
+          );
+          break;
           case 'DELETE':
             pedido = http.delete(uri, headers: headers);
             break;
@@ -100,6 +107,9 @@ class GaragemStore {
 
       if(resposta.statusCode == 204) return null;
 
+      print('Garagem: $metodo ${uri.path}');
+      print('Código HTTP: ${resposta.statusCode}');
+      print('Tipo de resposta: ${resposta.headers['content-type']}');
       final dynamic dados;
 
       try {

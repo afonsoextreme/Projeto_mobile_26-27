@@ -19,7 +19,7 @@ class Veiculo {
       tipo: json['tipo'] as String, 
       marca: json ['marca'] as String, 
       modelo: json['modelo'] as String, 
-      matricula: ['matricula'] as String,
+      matricula: json['matricula'] as String,
     );
   }
 
