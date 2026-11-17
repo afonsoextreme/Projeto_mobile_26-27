@@ -4,7 +4,7 @@ import 'package:ridesync/models/passeio.dart';
 import 'package:ridesync/services/sessao_store.dart';
 
 class PasseiosService {
-  static const String baseUrl = 'http://localhost:3000';
+  static const String baseUrl = 'http://10.208.212.170:3000';
 
   static Future<List<Passeio>> listarPasseios() async {
     final resposta = await http

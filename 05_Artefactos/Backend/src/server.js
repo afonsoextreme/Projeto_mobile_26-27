@@ -46,7 +46,7 @@ app.get('/api/passeios', async (req, res) =>{
         
         res.json(passeiosBD);
     } catch (erro) {
-        console.error('Erro ao listar passeios:', erro.message);
+        console.error('Erro ao listar passeios:', erro);
 
         res.status(500).json({
             mensagem: 'Não foi possivel carregar os passeios.',
