@@ -336,6 +336,7 @@ class _PasseioScreenState extends State<PasseiosScreen>{
               cancelado: passeio.cancelado,
               souOrganizador: passeio.souOrganizador,
               agendado: passeio.agendado,
+              estado: passeio.estado,
               onAbrir: () => abrirDetalhes(passeio),
               onEditar: () => editarPasseio(passeio),
               onCancelar: () => cancelarPasseio(passeio),

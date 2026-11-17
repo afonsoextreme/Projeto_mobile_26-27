@@ -5,11 +5,13 @@ const db = require('./db');
 const app = express();
 const PORT = 3000;
 const {authRouter, exigirSessao} = require('./auth');
+const veiculosRouter = require('./veiculos');
 
 
 app.use(cors());
 app.use(express.json());
 app.use('/api/auth', authRouter);
+app.use('/api/veiculos', veiculosRouter);
 
 app.get('/api/health',(req, res) => {
     res.json({
@@ -52,6 +54,88 @@ app.get('/api/passeios', async (req, res) =>{
     }
 });
 
+app.patch('/api/passeios/:id/estado', exigirSessao, async (req, res) => {
+    const id = Number(req.params.id);
+    const {estado} = req.body ?? {}
+
+    if(!Number.isSafeInteger(id) || id < 1) {
+        return res.status(400).json({
+            mensagem: 'Passeio inválido.',
+        });
+    }
+
+    if(estado !== 'emCurso' && estado !== 'terminado') {
+        return res.status(400).json({
+            mensagem: 'Estado inválido',
+        });
+    }
+
+    try{
+        const estadoAnterior =
+            estado === 'emCurso' ? 'agendado' : 'emCurso';
+
+        const sql = estado === 'emCurso'
+            ? `UPDATE passeio
+                SET pas_estado = ?, pas_data_inicio = CURRENT_TIMESTAMP
+                WHERE pas_id = ?
+                  AND pas_uti_id = ?
+                  AND pas_estado = ?`
+            : `UPDATE passeio
+               SET pas_estado = ?, pas_data_fim = CURRENT_TIMESTAMP
+               WHERE pas_id = ?
+                 AND pas_uti_id = ?
+                 AND pas_estado = ?`;
+
+        const [resultado] = await db.execute(sql, [
+            estado,
+            id,
+            req.utilizadorId,
+            estadoAnterior,
+        ]);
+
+        if (resultado.affectedRows === 1) {
+            return res.json({id, estado});
+        }
+
+        const [passeios] = await db.execute(
+            `SELECT
+                pas_uti_id AS organizadorId,
+                pas_estado AS estado
+            FROM passeio
+            WHERE pas_id = ?`,
+            [id],
+        );
+
+        if (passeios.length === 0) {
+            return res.status(404).json({
+                mensagem: 'O passeio já não existe.',
+            });
+        }
+
+        const passeio =passeios[0];
+
+        if (passeio.organizadorId !== req.utilizadorId) {
+            return res.status(403).json({
+                mensagem: 'Só o organizador pode alterar o estado.',
+            });
+        }
+
+        if (passeio.estado === estado) {
+            return res.json({id, estado});
+        }
+
+        return res.status(409).json({
+            mensagem:
+                'O passeio já não pode permite esta alteração. Atualiza a lista.',
+        });
+    } catch (erro) {
+        console.error('Erro ao alterar estado:', erro.message);
+
+        return res.status(500).json({
+            mensagem: 'Não foi possivel atualizar o passeio.',
+        });
+    }
+});
 
 app.listen(PORT, '0.0.0.0',() =>{
     console.log(`Api RideSync disponivel em http://localhost:${PORT}`);
@@ -169,7 +253,7 @@ app.post('/api/passeios', exigirSessao,async (req, res) => {
                 ins_vei_id,
                 ins_estado
             ) VALUES (?, ?, NULL, ?)`,
-            [organizadorId, passeioId, 'Confirmada'],
+            [organizadorId, passeioId, 'confirmada'],
         );
 
         await ligacao.commit();

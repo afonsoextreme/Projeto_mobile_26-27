@@ -96,4 +96,54 @@ class PasseiosService {
         estado: EstadoPasseio.agendado,
       );
     }
+  
+  static Future<Passeio> alterarEstado(
+    Passeio passeio,
+    EstadoPasseio estado,
+  ) async {
+    final token = SessaoStore.token;
+    final id = passeio.id;
+
+    if(token == null || token.isEmpty) {
+      throw Exception('Este passeio não tem um identificador válido.');
+    }
+
+    if (estado != EstadoPasseio.emCurso &&
+        estado != EstadoPasseio.terminado) {
+      throw Exception('Estado inválido.');
+    }
+
+    final resposta = await http
+        .patch(
+          Uri.parse('$baseUrl/api/passeios/$id/estado'),
+          headers: {
+            'Content-Type': 'application/json; charset=UTF-8',
+            'Authorization': 'Bearer $token',
+          },
+          body: jsonEncode({'estado' : estado.name}),
+        )
+        .timeout(const Duration(seconds: 10));
+
+    if (resposta.statusCode == 401) {
+      SessaoStore.sair();
+      throw Exception('A sessão expirou. Entra novamente.');
+    }
+
+    final dados = jsonDecode(
+      utf8.decode(resposta.bodyBytes),
+    ) as Map<String, dynamic>;
+
+    if (resposta.statusCode != 200) {
+      throw Exception(
+        dados['mensagem'] as String? ??
+            'Não foi possivel atualizar o passeio.',
+      );
+    }
+
+    if (dados['id'] != id || dados['estado'] != estado.name) {
+      throw Exception('Não foi possivel confirmar a alteração');
+    }
+
+    return passeio.copywith(estado: estado);
+  }
 }

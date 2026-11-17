@@ -4,6 +4,7 @@ import 'package:ridesync/models/veiculo.dart';
 import 'package:ridesync/services/garagem_store.dart';
 import 'package:ridesync/services/verificar_sessao.dart';
 import 'passeio_em_curso_screen.dart';
+import 'package:ridesync/services/passeios_service.dart';
 
 class DetalhesPasseioScreen extends StatefulWidget {
   final Passeio passeio;
@@ -21,6 +22,7 @@ class DetalhesPasseioScreen extends StatefulWidget {
 
   class _DetalhesPasseioScreenState extends State<DetalhesPasseioScreen> {
     late Passeio passeio;
+    bool _aIniciar = false;
 
     Veiculo? get _veiculoSelecionado => passeio.veiculoSelecionado;
     int get participantes => passeio.participantes;
@@ -58,7 +60,9 @@ class DetalhesPasseioScreen extends StatefulWidget {
 
       final veiculo = _veiculoSelecionado;
 
-      if(veiculo == null || !GaragemStore.veiculos.contains(veiculo)){
+      if(veiculo == null || 
+         veiculo.id == null ||
+         !GaragemStore.veiculos.any((item) => item.id == veiculo.id)){
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Escolhe um veiculo disponível na tua garagem.'),
@@ -90,39 +94,72 @@ class DetalhesPasseioScreen extends StatefulWidget {
       );
     }
     Future<void> iniciarPasseio() async {
+      if(_aIniciar) return;
       if(!verificarSessao(context)) return;
       if(!passeio.souOrganizador || !passeio.agendado) return;
+
+      setState(() {
+        _aIniciar = true;
+      });
+
+      var abrirMapa = false;
       
-      final confirmar = await showDialog<bool>(
-        context: context, 
-        builder: (context) => AlertDialog(
-          title: const Text('Iniciar Passeio'),
-          content: Text(
-            'Queres iniciar "${passeio.nome}"?'
-            'As novas inscrições serão encerradas.',
+      try {
+          final confirmar = await showDialog<bool>(
+          context: context, 
+          builder: (context) => AlertDialog(
+            title: const Text('Iniciar Passeio'),
+            content: Text(
+              'Queres iniciar "${passeio.nome}"?'
+              'As novas inscrições serão encerradas.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false), 
+                child: const Text('Voltar'),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.of(context).pop(true), 
+                child: const Text('Iniciar'),
+              ),
+            ],
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false), 
-              child: const Text('Voltar'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.of(context).pop(true), 
-              child: const Text('Iniciar'),
-            ),
-          ],
-        ),
-      );
+        );
 
-      if(!mounted || confirmar != true) return;
-      if(!verificarSessao(context)) return;
-      if(!passeio.souOrganizador || !passeio.agendado) return;
+        if(!mounted || confirmar != true) return;
+        if(!verificarSessao(context)) return;
 
-      atualizarPasseio(
-        passeio.copywith(estado: EstadoPasseio.emCurso),
-      );
+        final atualizado = await PasseiosService.alterarEstado(
+          passeio, 
+          EstadoPasseio.emCurso,
+        );
 
-      await abrirPasseioEmCurso();
+        if(!mounted) return;
+
+        atualizarPasseio(atualizado);
+        abrirMapa = true;
+      } catch (erro) {
+        if (!mounted) return;
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Não foi possivel confirmar o início do passeio'
+              '${erro.toString().replaceFirst('Exception', '')}',
+            ), 
+          ),
+        );
+      } finally {
+        if (mounted) {
+          setState(() {
+            _aIniciar = false;
+          });
+        }
+      }
+
+      if (mounted && abrirMapa) {
+        await abrirPasseioEmCurso();
+      }
     }
     
     Future<void> abrirPasseioEmCurso() async {
@@ -130,17 +167,15 @@ class DetalhesPasseioScreen extends StatefulWidget {
         if(!passeio.emCurso) return;
         if(!passeio.souOrganizador && !passeio.inscrito) return;
 
-        final terminou = await Navigator.of(context).push<bool>(
+        final atualizado = await Navigator.of(context).push<Passeio>(
           MaterialPageRoute(
             builder: (context) => PasseioEmCursoScreen(passeio: passeio),
           ),
         );
 
-        if(!mounted || terminou != true) return;
+        if(!mounted || atualizado == null) return;
 
-        atualizarPasseio(
-          passeio.copywith(estado: EstadoPasseio.terminado),
-        );
+        atualizarPasseio(atualizado);
       }
 
   String formatarData(DateTime data) {
@@ -169,6 +204,19 @@ class DetalhesPasseioScreen extends StatefulWidget {
   Future<void> escolherVeiculo() async{
     if(!verificarSessao(context)) return;
     if(!passeio.agendado) return;
+
+    try{
+      await GaragemStore.carregar();
+    } catch (erro) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(erro.toString())),
+      );
+      return;
+    }
+
+    if (!mounted) return;
 
     if(GaragemStore.veiculos.isEmpty){
       ScaffoldMessenger.of(context).showSnackBar(
@@ -206,7 +254,8 @@ class DetalhesPasseioScreen extends StatefulWidget {
                     '${veiculo.marca} ${veiculo.modelo}',
                   ),
                   subtitle: Text(veiculo.matricula),
-                  trailing: identical(veiculo, _veiculoSelecionado)
+                  trailing: veiculo.id != null &&
+                          veiculo.id == _veiculoSelecionado?.id
                       ? const Icon(Icons.check)
                       : null,
                   onTap: (){
@@ -354,7 +403,7 @@ class DetalhesPasseioScreen extends StatefulWidget {
                 
               if (passeio.souOrganizador && passeio.agendado)
                 FilledButton.icon(
-                  onPressed: iniciarPasseio, 
+                  onPressed: _aIniciar ? null : iniciarPasseio, 
                   icon: const Icon(Icons.play_arrow),
                   label: const Text('Iniciar Passeio'),
                 ),

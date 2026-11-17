@@ -57,6 +57,7 @@ class _CriarPasseioScreenState extends State<CriarVeiculoScreen>{
     if(!_formKey.currentState!.validate()) return;
 
     final veiculo = Veiculo(
+      id: widget.veiculo?.id,
       tipo: _tipo,
       marca: _marcaController.text.trim(),
       modelo: _modeloController.text.trim(),

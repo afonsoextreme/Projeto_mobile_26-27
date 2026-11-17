@@ -66,5 +66,7 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>O Ridesync usa a tua localização para mostrar a tua posição no mapa durante o passeio.</string>
 </dict>
 </plist>

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ridesync/theme/app_theme.dart';
+import 'package:ridesync/models/passeio.dart';
 
 class PasseioCard extends StatelessWidget{
   final String titulo;
@@ -14,6 +15,7 @@ class PasseioCard extends StatelessWidget{
   final VoidCallback onAbrir;
   final bool souOrganizador;
   final bool agendado;
+  final EstadoPasseio estado;
   
 
   const PasseioCard({
@@ -30,10 +32,33 @@ class PasseioCard extends StatelessWidget{
     required this.onAbrir,
     required this.souOrganizador,
     required this.agendado,
+    required this.estado,
   });
 
   @override
   Widget build (BuildContext context){
+    final (textoEstado, corEstado, iconeEstado) = switch (estado) {
+      EstadoPasseio.agendado => (
+        'Agendado',
+        Colors.blue.shade800,
+        Icons.schedule,
+      ),
+      EstadoPasseio.emCurso => (
+        'Em curso',
+        Colors.orange.shade900,
+        Icons.navigation_outlined,
+      ),
+      EstadoPasseio.terminado => (
+        'Terminado',
+        Colors.green.shade800,
+        Icons.flag_outlined,
+      ),
+      EstadoPasseio.cancelado => (
+        'Cancelado',
+        Colors.red.shade800,
+        Icons.cancel_outlined,
+      ),
+    };
     return Card(
       margin: EdgeInsets.zero,
       clipBehavior: Clip.antiAlias,
@@ -101,26 +126,24 @@ class PasseioCard extends StatelessWidget{
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              if(cancelado) ...[
-                const SizedBox(height: 8),
-                const Row(
-                  children: [
-                    Icon(
-                      Icons.cancel_outlined,
-                      color:  Colors.redAccent,
-                      size: 20,
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Icon(
+                    iconeEstado,
+                    color: corEstado,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    textoEstado,
+                    style: TextStyle(
+                      color: corEstado,
+                      fontWeight: FontWeight.bold,
                     ),
-                    SizedBox(width: 8),
-                    Text(
-                      'Cancelado',
-                      style: TextStyle(
-                        color: Colors.redAccent,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+                  ),
+                ],
+              ),
               const SizedBox(height: 8),
               Text(percurso),
               const SizedBox(height: 8),

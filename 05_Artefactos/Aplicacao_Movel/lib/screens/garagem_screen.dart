@@ -3,6 +3,8 @@ import 'package:ridesync/models/veiculo.dart';
 import 'criar_veiculo_screen.dart';
 import 'package:ridesync/theme/app_theme.dart';
 import 'package:ridesync/services/garagem_store.dart';
+import 'package:ridesync/services/sessao_store.dart';
+import 'package:ridesync/services/verificar_sessao.dart';
 
 class GaragemScreen extends StatefulWidget{
   const GaragemScreen({super.key});
@@ -14,43 +16,106 @@ class GaragemScreen extends StatefulWidget{
 class _GaragemScreenState extends State<GaragemScreen>{
   final List<Veiculo> veiculos = GaragemStore.veiculos;
 
+  bool _aCarregar = false;
+  bool _aGuardar = false;
+  String? _erro;
+  int _versaoCarregamento = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    SessaoStore.iniciada.addListener(_aoMudarSessao);
+    _carregar();
+  }
+
+  @override
+  void dispose() {
+    SessaoStore.iniciada.removeListener(_aoMudarSessao);
+    super.dispose();
+  }
+
+  void _aoMudarSessao() {
+    GaragemStore.limpar();
+    _carregar();
+  }
+
+  Future<void> _carregar() async {
+    if (!mounted) return;
+
+    final versao = ++_versaoCarregamento;
+
+    setState(() {
+      _aCarregar = true;
+      _erro = null;
+    });
+
+    try {
+      await GaragemStore.carregar();
+    } catch (erro) {
+      if (!mounted || versao != _versaoCarregamento) return;
+      _erro = erro.toString();
+    } finally {
+      if (mounted && versao == _versaoCarregamento) {
+        setState(() {
+          _aCarregar = false;
+        });
+      }
+    }
+  }
+
   Future<void> abrirFormulario({Veiculo? veiculo}) async {
     final resultado = await Navigator.of(context).push<Veiculo>(
       MaterialPageRoute(
-        builder: (context) => CriarVeiculoScreen(
-          veiculo: veiculo,
-        ),
+        builder: (context) => CriarVeiculoScreen(veiculo: veiculo),
       ),
     );
+
+    final tokenInicial = SessaoStore.token;
 
     if(!mounted || resultado == null) return;
+    if(SessaoStore.token != tokenInicial) return;
 
-    if(veiculo == null){
-      setState(() {
-        veiculos.add(resultado);
-      });
-    } else {
-      final indice = veiculos.indexOf(veiculo);
+    setState(() {
+      _aGuardar = true;
+    });
 
-      if(indice == -1) return;
+    try {
+      await GaragemStore.guardar(resultado);
 
-      setState(() {
-        veiculos[indice] = resultado;
-      });
-    }
+      if(!mounted) return;
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          veiculo == null
-              ? 'Veiculo adicionado à garagem'
-              : 'Veiculo adicionado'
+      setState(() {});
+
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            veiculo == null
+                ? 'Veiculo adicionado à garagem'
+                : 'Veiculo adicionado'
+          ),
         ),
-      ),
-    );
+      );
+    } catch (erro) {
+      if(!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(erro.toString())),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _aGuardar = false;
+        });
+      }
+    }
   }
 
   Future<void> apagarVeiculo(Veiculo veiculo) async{
+    if(_aGuardar || _aCarregar) return;
+    if(!verificarSessao(context)) return;
+    final tokenInicial = SessaoStore.token;
+
     final confirmar = await showDialog<bool>(
       context: context, 
       builder: (context) => AlertDialog(
@@ -62,12 +127,13 @@ class _GaragemScreenState extends State<GaragemScreen>{
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false), 
-            child: const Text('Cancelar'),
+            child: const Text('Voltar'),
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true), 
             child: const Text(
-              'Apagar',style: TextStyle(color: Colors.red),
+              'Apagar',
+              style: TextStyle(color: Colors.red),
             ),
           ),
         ],
@@ -75,16 +141,35 @@ class _GaragemScreenState extends State<GaragemScreen>{
     );
 
     if(!mounted || confirmar != true) return;
+    if (SessaoStore.token != tokenInicial) return;
 
     setState(() {
-      veiculos.remove(veiculo);
+      _aGuardar = true;
     });
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Veiculo Apagado'),
-      ),
-    );
+    try {
+      await GaragemStore.apagar(veiculo);
+
+      if (!mounted) return;
+
+      setState(() {});
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Veiculo Apagado')),
+      );
+    } catch (erro) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(erro.toString())),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _aGuardar = false;
+        });
+      }
+    }
   }
 
   @override
@@ -103,12 +188,36 @@ class _GaragemScreenState extends State<GaragemScreen>{
         ),
         const SizedBox(height: 24),
         FilledButton.icon(
-          onPressed: () => abrirFormulario(), 
+          onPressed: _aGuardar || _aCarregar
+              ? null 
+              : () => abrirFormulario(), 
           icon: const Icon(Icons.add),
           label: const Text('Adicionar Veiculo'),
         ),
+
+        if (_aGuardar || _aCarregar)
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 12),
+            child: LinearProgressIndicator(),
+          ),
+
+        if (SessaoStore.iniciada.value)
+          TextButton.icon(
+            onPressed: _aGuardar || _aCarregar ? null : _carregar,
+            icon: const Icon(Icons.refresh), 
+            label: const Text('Atualizar garagem')
+          ),
+
+        if (!SessaoStore.iniciada.value)
+          const Padding(
+            padding: EdgeInsets.only(top: 12),
+            child: Text('Inicia sessão para veres a tua garagem.'),
+          ),
         const SizedBox(height: 24),
-        if(veiculos.isEmpty)
+        if(SessaoStore.iniciada.value &&
+           !_aCarregar &&
+           _erro == null &&
+           veiculos.isEmpty)
           const Card(
             child: Padding(
               padding: EdgeInsets.all(24),
@@ -155,6 +264,7 @@ class _GaragemScreenState extends State<GaragemScreen>{
                 '${veiculo.tipo} - ${veiculo.matricula}',
               ),
               trailing: PopupMenuButton<String>(
+                enabled: !_aGuardar && !_aCarregar,
                 tooltip: 'Opções do veiculo',
                 onSelected: (opcao) {
                   if(opcao == 'editar'){
